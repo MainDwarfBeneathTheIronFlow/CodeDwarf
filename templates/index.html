@@ -8,10 +8,22 @@
     <header>Menu</header>
     <nav></nav>
 
+    <section>
+        <input type="text">
+    </section>
 
     
     <section>Content
-        <article>{% for i in smth %}</article>
+        <article>
+            {% for item in news %}
+            <div class="news-item">
+                <h2 class="nes-item__title" onclick="getContent({{ item_content }})">
+                {{ item }}
+                </h2>
+                
+            </div>
+            {% endfor %}
+        </article>
     </section>
     <aside></aside>
     <footer></footer>
