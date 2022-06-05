@@ -2,7 +2,6 @@ import sqlite3
 
 def insert_user(params: tuple()):
     # hexed_params = params[0:2] + tuple[3].hexed
-    print("ok")
 
     con = sqlite3.connect("db.sqlite3");
     con.row_factory = sqlite3.Row;
