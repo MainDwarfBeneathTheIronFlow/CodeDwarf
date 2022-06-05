@@ -29,12 +29,9 @@ def registration(request: Request):
 
 
 @app.post("/registration")
-async def registration(request: Request):
-    data = await request.form()
-    username = data.get("username")
-    
-    if not search_user((username,)):
-        insert_user((username, data.get("password")))
+async def registration(username: str = Form(None), password: str = Form(None)):
+    if username and password and not search_user((username,)):
+        insert_user((username, password))
     
 
 @app.get("/login")
