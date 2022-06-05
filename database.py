@@ -1,23 +1,26 @@
 import sqlite3
 
-CREATE_POSTS = '''CREATE TABLE IF NOT EXISTS Posts {
-    id INTEGER PRIMARY KEY,
-    author_name VARCHAR(20) NOT NULL, 
-    date NUMERIC NOT NULL,
-    title  VARCHAR(60) NOT NULL,
-    tenor VARCHAR(300) NOT NULL
-    }'''
+def insert_user(params: tuple()):
+    # hexed_params = params[0:2] + tuple[3].hexed
+    print("ok")
 
-INSERT_POST = '''INSERT INTO Posts (author_name, date, title, tenor) VALUES
-    
-    
-    
-    
-    '''
+    con = sqlite3.connect("db.sqlite3");
+    con.row_factory = sqlite3.Row;
+    cur = con.cursor();
+    cur.execute('''INSERT INTO Users (username, password) VALUES (?, ?)''', params);
+    con.commit();
 
+def insert_post(params: tuple()):
+    con = sqlite3.connect("db.sqlite3");
+    con.row_factory = sqlite3.Row;
+    cur = con.cursor();
+    cur.execute('''INSERT INTO Posts (author_id, date, title, tenor) VALUES (?, ?, ?, ?)''', params);
+    con.commit();
 
-con = sqlite3.connect('posts.db') #create connection
-
-cur = con.cursor() #create cursor
-
-cur.execute()
+def search_user(param: tuple()):
+    con = sqlite3.connect("db.sqlite3");
+    con.row_factory = sqlite3.Row;
+    cur = con.cursor();
+    data = cur.execute('''SELECT * FROM Users WHERE username = ?''', param);
+    data = [dict(row) for row in data.fetchall()]
+    return data
