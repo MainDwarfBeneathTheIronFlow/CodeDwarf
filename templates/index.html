@@ -8,12 +8,22 @@
     <header>Menu</header>
     <nav></nav>
 
-    <a href="{{ url_for('registration')}}" method="GET">registration</a>
-                         
-    <section>Content
-        <article>
-            
-        </article>
+    <a href="{{ url_for('registration') }}" method="GET">registration</a>
+    <a href="{{ url_for('post') }}" method="GET">Make a post</a>       
+    
+    
+    <h1>Posts</h1>
+    
+
+    <section>
+        {% for post in posts %}
+            <article class="post">
+                <div>{{ post.title }}</div>
+                <div>{{ post.author }}</div>
+                <div>{{ post.date }}</div>
+                <div>{{ post.tenor}}</div>
+            </article>
+        {% endfor %}
     </section>
     <aside></aside>
     <footer></footer>

@@ -1,3 +1,9 @@
 body {
     background-color: darkslateblue;
 }
+.post {
+    flex: auto;
+    flex-direction: column;
+    border: 2em;
+    border-width: 10px;
+}

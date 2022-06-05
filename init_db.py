@@ -2,8 +2,8 @@ import sqlite3
 
 CREATE_POSTS = '''CREATE TABLE IF NOT EXISTS Posts (
     id INTEGER PRIMARY KEY,
-    author_id VARCHAR(20) NOT NULL, 
-    date NUMERIC NOT NULL,
+    author VARCHAR(16) NOT NULL, 
+    date TIMESTAMP NOT NULL,
     title  VARCHAR(60) NOT NULL,
     tenor VARCHAR(300) NOT NULL
     )'''
