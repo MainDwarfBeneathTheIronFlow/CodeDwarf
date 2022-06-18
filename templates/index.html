@@ -5,27 +5,28 @@
     <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
 </head>
 <body>
+    <div class="top">Top bar</div>
     <header>Menu</header>
-    <nav></nav>
 
-    <a href="{{ url_for('registration') }}" method="GET">registration</a>
-    <a href="{{ url_for('post') }}" method="GET">Make a post</a>       
+    <div class="interface">
     
-    
-    <h1>Posts</h1>
     
 
-    <section>
-        {% for post in posts %}
-            <article class="post">
-                <div>{{ post.title }}</div>
-                <div>{{ post.author }}</div>
-                <div>{{ post.date }}</div>
-                <div>{{ post.tenor}}</div>
-            </article>
-        {% endfor %}
-    </section>
-    <aside></aside>
-    <footer></footer>
+        <div class="navigation">
+
+        <a href="{{ url_for('registration') }}" method="GET">registration</a>
+        <a href="{{ url_for('post') }}" method="GET">Make a post</a>       
+        <a href="{{ url_for('login') }}" method="GET">Login</a>
+        </div>
+        
+        
+        
+        <div class="aside">
+            smth
+        </div>
+
+        <div class="user"></div>
+    </div>
+    bottom
 </body>
 </html>
