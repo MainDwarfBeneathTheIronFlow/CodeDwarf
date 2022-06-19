@@ -3,10 +3,9 @@
         {% for post in posts %}
             <article class="post">
             
-                <div>{{ post.title }}</div>
-                <div>{{ post.author }}</div>
-                <div>{{ post.date }}</div>
-                <div>{{ post.tenor}}</div>
+                <label>title: <div>{{ post.title }}</div></label>
+                <label>user_id: <div>{{ post.owner_id }}</div></label>
+                <label>description: <div>{{ post.description}}</div></label>
             
             </article>
         {% endfor %}

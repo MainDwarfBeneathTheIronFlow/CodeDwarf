@@ -68,7 +68,7 @@ async def registration(request: Request, db: Session = Depends(get_db)):
         errors.append("To short password: requires 6 symbols or more")
         return templates.TemplateResponse("registration.html", {"request": request, "errors": errors})
     user = schemas.UserCreate(username=username, password=password)
-    # return crud.create_user(db=db, user=user)
+    crud.create_user(db=db, user=user)
     return RedirectResponse("/", status_code=303)
     
 
@@ -96,7 +96,7 @@ async def login(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse("login.html" ,{"request": request, "errors": errors})
     else:
         if pwd_context.verify(password, user.hashed_password):
-            jw
+            
             return RedirectResponse("/", status_code=303)
     
 
@@ -149,6 +149,12 @@ def index(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
 
 
+@app.get("/news", response_class=HTMLResponse)
+def index(request: Request, db: Session = Depends(get_db)):
+    posts = read_posts(db=db)
+    return templates.TemplateResponse("news.html", {"request": request, "posts": posts})
+
+
 # @app.route("/login", methods=["GET", "POST"])
 @app.get("/registration", response_class=HTMLResponse)
 def registration(request: Request):
@@ -168,8 +174,13 @@ def post(request: Request):
     return templates.TemplateResponse("postCreation.html", {"request": request})
 
 
-# @app.post("/post") #TODO post User_id
-# def post(title: str = Form(None, max_length=60), description: str = Form(None, max_length=300)):
-#     if title and description: #TODO check tITlE
-#         return RedirectResponse(url="/", status_code=303)
-#     return RedirectResponse(url="/post",status_code=303)
+@app.post("/post") #TODO post User_id
+async def post(request: Request, db: Session = Depends(get_db)):
+    form = await request.form()
+    title = form.get("title")
+    description = form.get("description")
+    if title and description: #TODO check tITlE
+        post = schemas.PostCreate(title=title, description=description)
+        crud.create_user_post(db=db, post=post, user_id=1)
+        return RedirectResponse(url="/news", status_code=303)
+    return RedirectResponse(url="/post",status_code=303)

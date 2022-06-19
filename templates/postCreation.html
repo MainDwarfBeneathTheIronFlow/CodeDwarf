@@ -6,11 +6,10 @@
     <title>Create Post</title>
 </head>
 <body>
-    <div>
+    <form method="POST">
         <label>Title:<input type="text" name="title"></label>
         <label>Description:<textarea name="description" cols="30" rows="10"></textarea></label>
-        <!-- <input type="action" value="Submit"> -->
-        <button onclick="{{ url_for('posts', user_id = 1, ) }}" method="POST"></button>
-    </div>
+        <button type="submit" method="POST">Post</button>
+    </form>
 </body>
 </html>
