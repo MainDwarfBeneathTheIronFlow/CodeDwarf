@@ -19,7 +19,15 @@
         <a href="{{ url_for('login') }}" method="GET">Login</a>
         </div>
         
-        
+        {% for post in posts %}
+            <article class="post">
+            
+                <label>title: <div>{{ post.title }}</div></label>
+                <label>user_id: <div>{{ post.owner_id }}</div></label>
+                <label>description: <div>{{ post.description}}</div></label>
+            
+            </article>
+        {% endfor %}
         
         <div class="aside">
             smth
