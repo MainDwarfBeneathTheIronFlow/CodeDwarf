@@ -1,0 +1,348 @@
+@charset "UTF-8";
+/*Обнуление*/
+* {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+*, *:before, *:after {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+:focus, :active {
+  outline: none;
+}
+
+a:focus, a:active {
+  outline: none;
+}
+
+nav, footer, header, aside {
+  display: block;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  font-size: 100%;
+  line-height: 1;
+  font-size: 14px;
+  -ms-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+input, button, textarea {
+  font-family: inherit;
+}
+
+input::-ms-clear {
+  display: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+button::-moz-focus-inner {
+  padding: 0;
+  border: 0;
+}
+
+a, a:visited {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+ul li {
+  list-style: none;
+}
+
+img {
+  vertical-align: top;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-size: inherit;
+  font-weight: 400;
+}
+
+body {
+  font-size: 20px;
+  background-color: #2e2e2e;
+}
+
+.flex_box {
+  height: 100vh;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+}
+
+.flex_header {
+  padding: 20px;
+  background-color: #3f9e7e;
+  text-align: center;
+  position: inherit;
+}
+
+.flex_header .pipe_block {
+  position: absolute;
+  top: -100px;
+  left: 0px;
+  height: 100%;
+  width: 100%;
+  z-index: 0;
+}
+
+.flex_header .pipe_block .pipe_flex {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -ms-flex-line-pack: start;
+      align-content: flex-start;
+  height: 15%;
+  width: 100%;
+}
+
+.flex_header .pipe_block .pipe_flex .pipe4 {
+  background-image: url(images/pipe/BASE_PIPE.png);
+}
+
+.flex_header .pipe_block .pipe_flex .pipe2 {
+  background-image: url(images/pipe/PIPE_2.png);
+}
+
+.flex_header .pipe_block .pipe_flex .pipe3 {
+  background-image: url(images/pipe/PIPE_2.png);
+}
+
+.flex_header .pipe_block .pipe_flex .pipe1, .flex_header .pipe_block .pipe_flex .pipe2, .flex_header .pipe_block .pipe_flex .pipe3, .flex_header .pipe_block .pipe_flex .pipe4 {
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  -webkit-transform: scaleY(-1);
+          transform: scaleY(-1);
+}
+
+.to_reg_button {
+  z-index: 2;
+  display: inline-block;
+  text-align: center;
+  padding: 10px;
+  font-size: 20px;
+}
+
+.flex_base {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  scroll-behavior: auto;
+  padding-left: 20px;
+  padding-right: 20px;
+  overflow: auto;
+  -webkit-box-flex: 1;
+      -ms-flex: 1 1 auto;
+          flex: 1 1 auto;
+  background-color: #d6d6d6;
+  color: #691437;
+}
+
+.content {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  justify-items: stretch;
+  scroll-behavior: auto;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+
+.left_panel {
+  visibility: none;
+  width: 15vh;
+}
+
+.right_panel {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  -webkit-box-align: stretch;
+      -ms-flex-align: stretch;
+          align-items: stretch;
+  min-width: auto;
+  width: 15vh;
+  max-width: 15vh;
+}
+
+.right_panel .jump_button {
+  background-color: #222222;
+  color: #f0f0f0;
+  margin-bottom: 2px;
+}
+
+.right_panel .jump_button input {
+  padding: 5px;
+  width: 100%;
+  font-size: 20px;
+}
+
+.reg_book {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  padding-top: 20px;
+}
+
+.reg_book input {
+  font-size: 20px;
+  padding: 5px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.news_element {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  max-width: 1000px;
+  margin-bottom: 2px;
+  background-color: #3d3d3d;
+}
+
+.news_element:before {
+  content: '';
+  min-width: 160px;
+  min-height: 160px;
+  background-color: bisque;
+  display: inline-block;
+}
+
+.news_element .news_content {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  max-height: 160px;
+  overflow-y: scroll;
+  padding: 10px;
+  width: 100%;
+}
+
+.news_element .news_content .news_header {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  width: 100%;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: row;
+          flex-direction: row;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+}
+
+.news_element .news_content .news_header div {
+  display: inline-block;
+}
+
+.news_element .news_content .news_header .news_title {
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.news_element .news_content .news_header .news_time {
+  font-size: 25px;
+  font-weight: 400;
+}
+
+.news_element .news_content .news_header .news_author {
+  color: #b4b4b4;
+}
+
+.news_element .news_content .news_tenor {
+  padding-top: 10px;
+  overflow: hidden;
+}
+
+.news_block {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+      -ms-flex-direction: column;
+          flex-direction: column;
+  background-color: #4e4e4e;
+  width: 1000px;
+  min-width: 160px;
+  max-width: 1000px;
+  height: -webkit-fit-content;
+  height: -moz-fit-content;
+  height: fit-content;
+  max-height: 100%;
+  color: antiquewhite;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.news_viewer {
+  overflow: auto;
+  background-color: #3d3d3d;
+  color: antiquewhite;
+  width: 0px;
+}
+
+.flex_footer {
+  height: 10%;
+  background-color: #272727;
+}
+
+.false_footer {
+  background-color: #272727;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+}
+
+.my_canvas {
+  position: fixed;
+  display: none;
+  top: 0px;
+  left: 0px;
+}
+
+.my_canvas canvas {
+  height: 100%;
+  width: 100%;
+}

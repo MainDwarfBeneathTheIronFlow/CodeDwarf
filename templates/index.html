@@ -1,0 +1,70 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main_page</title>
+    <link href = "{{ url_for('static', path = '/css/styles.css') }}" rel="stylesheet">
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" ></script>
+    <script src = "{{ url_for('static', path = '/js/logic.js') }}"></script>
+    <script> 
+        let pathToProject = "{{ url_for('static', path = '/') }}";
+    </script>
+</head>
+<body>
+    <!-- <div>{{username}}</div> -->
+    <div class = "flex_box">
+        {% if not user %}
+        <div id = "header" class = "flex_header">
+            <!-- <div class="pipe_block">
+                <div class="pipe_flex">
+                    <div class="pipe1"></div>
+                    <div class="pipe2"></div>
+                    <div class="pipe3"></div>
+                    <div class="pipe4"></div>
+                </div>
+            </div> -->
+            <form id = "reged_button" action="/registration" method="get">    
+                <input class="to_reg_button" type="submit" value="Registration">
+            </form>
+        
+        </div>
+        {% endif %}
+        <div class = "flex_base">
+            <div class="left_panel"></div>
+
+            <div id="content" class="content">
+                <!-- <a href="{{ url_for('post') }}" method="GET">Create</a> -->
+                <div id="news_block" class="news_block">
+                    {% for post in posts %}
+                        <article id="news{{ post.id }}" class="news_element">
+                            <div class="news_content">
+                                <div class="news_header">
+                                    <div class="news_title">{{ post.title }}</div>
+                                    <div class="news_author">{{ post.author }}</div>
+                                </div>
+                                <div class="news_tenor">{{ post.description }}</div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+                <div class="news_viewer"></div>
+            </div>
+
+            <div class="right_panel">
+                <form id = "to_news_button" class="jump_button" action="/" method="get">
+                    <input class="jump_button" type="submit" value="News">
+                </form>
+                <form id = "to_projects_button" class="jump_button" action="/projects" method="get">
+                    <input class="jump_button" type="submit" value="Projects">
+                </form>
+            </div>
+
+
+        </div>
+        {% if user %}
+        <div id = "footer" class = "flex_footer"><a href="/logout">Logout</a></div>
+        {% endif %}
+    </div>
+    <script src = "{{ url_for('static', path = '/js/news.js') }}"></script>
+</body>
+</html>

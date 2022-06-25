@@ -1,0 +1,14 @@
+<div class="news">
+    <div class="posts">
+        {% for post in posts %}
+            <article class="post">
+            
+                <div>{{ post.title }}</div>
+                <div>{{ post.author }}</div>
+                <div>{{ post.date }}</div>
+                <div>{{ post.tenor}}</div>
+            
+            </article>
+        {% endfor %}
+    </div>
+</div>
