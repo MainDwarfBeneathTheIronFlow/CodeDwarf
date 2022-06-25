@@ -1,125 +1,53 @@
-from fastapi import FastAPI, Depends, Form, Request, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from datetime import timedelta
+from typing import Union
+
+from fastapi import FastAPI, Request, Response, Depends, Cookie, HTTPException, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
-from jose import jwt
-
-from passlib.context import CryptContext
-
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy.orm import Session
+from utils import OAuth2PasswordBearerWithCookie
+from database import engine, get_db
+from security import create_access_token
+from auth import authenticate_user, get_current_user_from_token
+from config import settings
+from crud import create_user, get_user, create_user_post, get_posts
+from forms import LoginForm
 
-from sql_db import crud, models, schemas
-from sql_db.database import SessionLocal, engine
+import schemas
+import models
 
-
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 templates = Jinja2Templates(directory="templates")
 
 
 
-#TODO make hashier file
+@app.get("/", response_class=HTMLResponse,)
+def index(request: Request, db: Session = Depends(get_db)):
+    posts = get_posts(db=db)
+    token = request.cookies.get("access_token")
+    if token is None:
+        return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
+    scheme, param = get_authorization_scheme_param(token)
+    current_user: models.User = get_current_user_from_token(token=param, db=db)
+    if current_user is None:
+        return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
+    return templates.TemplateResponse("index.html", {"request": request, "posts": posts, "user":current_user})
+    
 
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-
-
-def verify_password(password: str, hashed_password: str):
-    return pwd_context.verify(password, hashed_password)
-
-#TODO merge with login
-def authenticate_user(db: Session = Depends(get_db), username: str | None = None, password: str | None = None):
-    """"Validation user login"""
-    if username == None or password == None:
-        return False
-    user = crud.get_user_by_username(db, username)
-    if not user:
-        return False
-    if not verify_password(password, user.hashed_password):
-        return False
-    return user
-
-
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    """"Create token for session"""
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-        token_data = schemas.TokenData(username=username)
-    except JWTError:
-        raise credentials_exception
-    user = crud.get_user_by_username(db=db, username=token_data.username)
-    if user is None:
-        raise credentials_exception
-    return user
-
-
-async def get_current_active_user(current_user: schemas.User = Depends(get_current_user)):
-    """if user active return User"""
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-
-@app.post("/token", response_model=schemas.Token)
-async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-@app.get("/registration")
+@app.get("/registration", response_class=HTMLResponse)
 def registration(request: Request):
-    return templates.TemplateResponse("registration.html" ,{"request": request})
+    return templates.TemplateResponse("registration.html", {"request": request})
 
 
 @app.post("/registration")
@@ -131,115 +59,62 @@ async def registration(request: Request, db: Session = Depends(get_db)):
     if not len(username):
         errors.append("Input username")
         return templates.TemplateResponse("registration.html", {"request": request, "errors": errors})
-    db_user = crud.get_user_by_username(db=db, username = username)
+    db_user = get_user(db=db, username=username)
     if db_user:
         errors.append("Username already registered")
         return templates.TemplateResponse("registration.html", {"request": request, "errors": errors})
-    elif len(password) < 6:
-        errors.append("To short password: requires 6 symbols or more")
+    elif len(password) < 4:
+        errors.append("To short password: requires 4 symbols or more")
         return templates.TemplateResponse("registration.html", {"request": request, "errors": errors})
     user = schemas.UserCreate(username=username, password=password)
-    crud.create_user(db=db, user=user)
+    create_user(db=db, user=user)
     return RedirectResponse("/", status_code=303)
-    
 
-
-@app.get("/login")
+@app.get("/login", response_class=HTMLResponse)
 def login(request: Request):
-    return templates.TemplateResponse("login.html" ,{"request": request})
+    return templates.TemplateResponse("login.html", {"request": request})
 
-
-@app.post("/login")
-async def login(request: Request, db: Session = Depends(get_db)):
-    form = await request.form()
-    username = form.get("username")
-    password = form.get("password")
-    errors = list()
-    if not username:
-        errors.append("WTF man? Don't touch html code!!!!")
-        return templates.TemplateResponse("login.html" ,{"request": request, "errors": errors})
-    elif not password:
-        errors.append("WTF man? Don't touch html code!!!!")
-        return templates.TemplateResponse("login.html" ,{"request": request, "errors": errors})
-    user = crud.get_user_by_username(db=db, username=username)
-    if not user:
-        errors.append("I don't now this maggot")
-        return templates.TemplateResponse("login.html" ,{"request": request, "errors": errors})
+@app.get("/logout", response_class=RedirectResponse)
+def logout(request: Request, response: Response):
+    token = request.cookies.get("access_token")
+    if token:
+        response = RedirectResponse(url="/", status_code=303)
+        response.delete_cookie("access_token")
+        return response
     else:
-        if pwd_context.verify(password, user.hashed_password):
-            
-            return RedirectResponse("/", status_code=303)
+        return RedirectResponse(url="/", status_code=303)
+
     
 
 
-
-
-
-
-@app.get("/users/", response_model=list[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = crud.get_users(db, skip=skip, limit=limit)
-    return users
-
-
-@app.get("/users/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = crud.get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
-
-
-# @app.post("/users/{user_id}/posts/", response_model=schemas.Post)
-# def create_post_for_user(user_id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
-#     return crud.create_user_post(db=db, post=post, user_id=user_id)
-
-
-# @app.post("/posts/", response_model=HTMLResponse)
-# def create_post_for_user(user_id: int, title: str = Form(max_length=60), description: str= Form(max_length=300), db: Session = Depends(get_db)):
-#     crud.create_user_post(db=db, post=post, user_id=user_id)
-#     return
-
-
-# @app.get("/posts/", response_model=list[schemas.Post])
-# def read_posts(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
-#     posts = crud.get_posts(db, skip=skip, limit=limit)
-#     return posts
-
-
-def read_posts(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
-    posts = crud.get_posts(db, skip=skip, limit=limit)
-    return posts
-
-#--------------------------------------------------------------------
-
-
-@app.get("/", response_class=HTMLResponse)
-def index(request: Request, db: Session = Depends(get_db)):
-    posts = read_posts(db=db)
-    return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
-
-
-@app.get("/news", response_class=HTMLResponse)
-def index(request: Request, db: Session = Depends(get_db)):
-    posts = read_posts(db=db)
-    return templates.TemplateResponse("news.html", {"request": request, "posts": posts})
-
-
-# @app.route("/login", methods=["GET", "POST"])
-@app.get("/registration", response_class=HTMLResponse)
-def registration(request: Request):
-    return templates.TemplateResponse("registration.html", {"request": request})
-
-
-# @app.post("/registration")
-# def registration(username: str = Form(None, max_length=16), password: str = Form(None, max_length=16)):
-#     if username and password and not search_user((username,)):
-#         insert_user((username, password))
-#         return RedirectResponse(url="/", status_code=303)
-#     return RedirectResponse(url="/registration",status_code=303)
+@app.post("/login", response_model=schemas.Token)
+def login_for_access_token(response: Response, request: Request ,form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):  #added response as a function parameter
+    user = authenticate_user(form_data.username, form_data.password, db)
+    posts = get_posts(db=db)
     
-        
+    errors = list()
+    if not user:
+        errors.append("Incorrect username or password")
+        return templates.TemplateResponse("login.html", {"request": request, "errors":errors})  
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    msg="Ok"
+    response = RedirectResponse(url="/", status_code=303)
+    response.set_cookie(key="access_token",value=f"Bearer {access_token}", httponly=True)  #set HttpOnly cookie in response
+    
+    return response
+
+    # return {"access_token": access_token, "token_type": "bearer"}
+
+@app.get("/profile", response_class=HTMLResponse)
+def me(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    scheme, param = get_authorization_scheme_param(token)
+    current_user: models.User = get_current_user_from_token(token=param, db=db)
+    return templates.TemplateResponse("profile.html", {"request": request, "user": current_user})
+
 @app.get("/post", response_class=HTMLResponse)
 def post(request: Request):
     return templates.TemplateResponse("postCreation.html", {"request": request})
@@ -247,11 +122,19 @@ def post(request: Request):
 
 @app.post("/post") #TODO post User_id
 async def post(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    scheme, param = get_authorization_scheme_param(token)
+    current_user: models.User = get_current_user_from_token(token=param, db=db)
+    if current_user is None:
+        errors = list()
+        errors.append("Expired session. Please login.")
+        return templates.TemplateResponse("login.html", {"request": request, "errors":errors})
     form = await request.form()
     title = form.get("title")
     description = form.get("description")
-    if title and description: #TODO check tITlE
+    if title and description and get_user(db=db,username=current_user.username): #TODO check tITlE
         post = schemas.PostCreate(title=title, description=description)
-        crud.create_user_post(db=db, post=post, user_id=1)
-        return RedirectResponse(url="/news", status_code=303)
-    return RedirectResponse(url="/post",status_code=303)
+        create_user_post(db=db, post=post, user_id=current_user.id)
+        return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse(url="/",status_code=303)
+
