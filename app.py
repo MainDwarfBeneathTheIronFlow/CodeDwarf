@@ -35,10 +35,12 @@ templates = Jinja2Templates(directory="templates")
 def index(request: Request, db: Session = Depends(get_db)):
     posts = get_posts(db=db)
     token = request.cookies.get("access_token")
+    if token is None:
+        return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
     scheme, param = get_authorization_scheme_param(token)
     current_user: models.User = get_current_user_from_token(token=param, db=db)
     if current_user is None:
-        return templates.TemplateResponse("login.html", {"request": request, "posts": posts})
+        return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
     return templates.TemplateResponse("index.html", {"request": request, "posts": posts, "user":current_user})
     
 
@@ -72,21 +74,34 @@ async def registration(request: Request, db: Session = Depends(get_db)):
 def login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
+@app.get("/logout", response_class=RedirectResponse)
+def logout(request: Request, response: Response):
+    token = request.cookies.get("access_token")
+    if token:
+        response = RedirectResponse(url="/", status_code=303)
+        response.delete_cookie("access_token")
+        return response
+    else:
+        return RedirectResponse(url="/", status_code=303)
+
+    
+
 
 @app.post("/login", response_model=schemas.Token)
 def login_for_access_token(response: Response, request: Request ,form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):  #added response as a function parameter
     user = authenticate_user(form_data.username, form_data.password, db)
+    posts = get_posts(db=db)
+    
     errors = list()
     if not user:
         errors.append("Incorrect username or password")
-        return templates.TemplateResponse("login.html", {"request": request, "errors":errors})
-
+        return templates.TemplateResponse("login.html", {"request": request, "errors":errors})  
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     msg="Ok"
-    response = templates.TemplateResponse("index.html", {"request": request, "msg":msg})
+    response = RedirectResponse(url="/", status_code=303)
     response.set_cookie(key="access_token",value=f"Bearer {access_token}", httponly=True)  #set HttpOnly cookie in response
     
     return response
@@ -122,3 +137,4 @@ async def post(request: Request, db: Session = Depends(get_db)):
         create_user_post(db=db, post=post, user_id=current_user.id)
         return RedirectResponse(url="/", status_code=303)
     return RedirectResponse(url="/",status_code=303)
+
