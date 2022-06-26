@@ -1,10 +1,17 @@
 from sqlalchemy.orm import Session  
 from hasher import hash_password
 import models, schemas
+import os
 
 
 def get_user(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
+
+def get_posts(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Post).offset(skip).limit(limit).all()
+
+def get_games(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.Game).offset(skip).limit(limit).all()
 
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = hash_password(user.password)
@@ -21,5 +28,17 @@ def create_user_post(db: Session, post: schemas.PostCreate, user_id: int):
     db.refresh(db_post)
     return db_post
 
-def get_posts(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Post).offset(skip).limit(limit).all()
+def create_game(db: Session, game: schemas.GameCreate):
+    db_game = models(**game.dict())
+    db.add(db_game)
+    db.commit()
+    db.refresh()
+    return db_game
+
+def update_avatar(db: Session, username: str, avatar_name: str):
+    user = db.query(models.User).filter(models.User.username == username).first()
+    if user.avatar_name != "default.png":
+        os.remove(f"static//avatars//{user.avatar_name}")
+    user.avatar_name = avatar_name
+    db.commit()
+    db.refresh(user)
