@@ -1,7 +1,8 @@
 from datetime import timedelta
+import secrets as _secrets
 from typing import Union
 
-from fastapi import FastAPI, Request, Response, Depends, Cookie, HTTPException, status, Form
+from fastapi import FastAPI, Request, Response, Depends, Cookie, HTTPException, status, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -38,8 +39,11 @@ def index(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
     if token is None:
         return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
-    scheme, param = get_authorization_scheme_param(token)
-    current_user: models.User = get_current_user_from_token(token=param, db=db)
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
     if current_user is None:
         return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
     return templates.TemplateResponse("index.html", {"request": request, "posts": posts, "user":current_user})
@@ -118,11 +122,38 @@ def login_for_access_token(response: Response, request: Request, form_data: OAut
     # return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/profile", response_class=HTMLResponse)
-def me(request: Request, db: Session = Depends(get_db)):
+def profile(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
-    scheme, param = get_authorization_scheme_param(token)
-    current_user: models.User = get_current_user_from_token(token=param, db=db)
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        response = RedirectResponse(url="/", status_code=303)
+        response.delete_cookie("access_token")
+        return response
     return templates.TemplateResponse("profile.html", {"request": request, "user": current_user})
+
+@app.post("/profile/change_avatar")
+def change_avatar(request: Request, avatar: UploadFile = File(...), db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        response = RedirectResponse(url="/", status_code=303)
+        response.delete_cookie("access_token")
+        return response
+
+    FILEPATH = "./static/"
+    filename = avatar.filename
+    extension = filename.split(".")[1]
+    if extension not in ["jpg", "png"]:
+        return RedirectResponse(url="/profile", status_code=407)
+    token_name = _secrets.token_hex(10) + "." + extension
+    generated_name = FILEPATH + token_name
+    
+
+        
 
 @app.get("/post", response_class=HTMLResponse)
 def post(request: Request):
