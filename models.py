@@ -8,7 +8,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    avatar_name  = Column(String, default="0.png")
+    avatar_name  = Column(String, default="default.png")
     username = Column(String, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
