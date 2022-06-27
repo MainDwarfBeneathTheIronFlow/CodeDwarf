@@ -1,6 +1,7 @@
 from datetime import timedelta
 import secrets as _secrets
 from typing import Union
+from PIL import Image
 
 from fastapi import FastAPI, Request, Response, Depends, Cookie, HTTPException, status, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -14,8 +15,7 @@ from database import engine, get_db
 from security import create_access_token
 from auth import authenticate_user, get_current_user_from_token
 from config import settings
-from crud import create_user, get_user, create_user_post, get_posts
-from forms import LoginForm
+import crud
 
 import schemas
 import models
@@ -35,7 +35,7 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse,)
 def index(request: Request, db: Session = Depends(get_db)):
-    posts = get_posts(db=db)
+    posts = crud.get_posts(db=db)
     token = request.cookies.get("access_token")
     if token is None:
         return templates.TemplateResponse("index.html", {"request": request, "posts": posts})
@@ -56,12 +56,14 @@ def registration(request: Request):
 
 
 @app.post("/registration")
-async def registration(request: Request, db: Session = Depends(get_db), username: str = Form(...),password: str = Form(...)):
+async def registration(request: Request, db: Session = Depends(get_db), username: str = Form(None),password: str = Form(None)):
     errors = list()
+    if username is None or password is None:
+        return templates.TemplateResponse("registration.html", {"request": request, "errors": errors})
     if not len(username):
         errors.append("Input username")
         return templates.TemplateResponse("registration.html", {"request": request, "errors": errors})
-    db_user = get_user(db=db, username=username)
+    db_user = crud.get_user(db=db, username=username)
 
     if db_user:
         errors.append("Username already registered")
@@ -71,12 +73,12 @@ async def registration(request: Request, db: Session = Depends(get_db), username
         return templates.TemplateResponse("registration.html", {"request": request, "errors": errors})
 
     user = schemas.UserCreate(username=username, password=password)
-    create_user(db=db, user=user)
+    crud.create_user(db=db, user=user)
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": username}, expires_delta=access_token_expires
     )
-    response = RedirectResponse(url="/", status_code=303)
+    response = RedirectResponse(url="/", status_code=302)
     response.set_cookie(key="access_token", value=f"Bearer {access_token}",
                         httponly=True)  # set HttpOnly cookie in response
     time.sleep(5)
@@ -91,35 +93,40 @@ def login(request: Request):
 def logout(request: Request, response: Response):
     token = request.cookies.get("access_token")
     if token:
-        response = RedirectResponse(url="/", status_code=303)
+        response = RedirectResponse(url="/", status_code=302)
         response.delete_cookie("access_token")
         return response
     else:
-        return RedirectResponse(url="/", status_code=303)
+        return RedirectResponse(url="/", status_code=302)
 
     
 
 
 @app.post("/login", response_model=schemas.Token)
-def login_for_access_token(response: Response, request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):  #added response as a function parameter
-    user = authenticate_user(form_data.username, form_data.password, db)
-    posts = get_posts(db=db)
+def login_for_access_token(response: Response, request: Request,
+    username: str = Form(None),password: str = Form(None),
+    db: Session = Depends(get_db)):  #added response as a function parameter
+    
+    if username is None or password is None:
+        return templates.TemplateResponse("login.html", {"request": request})  
+    user = authenticate_user(username, password, db)
+    posts = crud.get_posts(db=db)
     
     errors = list()
     if not user:
         errors.append("Incorrect username or password")
+        return templates.TemplateResponse("login.html", {"request": request, "errors":errors})  
         return templates.TemplateResponse("login.html", {"request": request, "errors":errors})  
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     msg="Ok"
-    response = RedirectResponse(url="/", status_code=303)
+    response = RedirectResponse(url="/", status_code=302)
     response.set_cookie(key="access_token",value=f"Bearer {access_token}", httponly=True)  #set HttpOnly cookie in response
     
     return response
 
-    # return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/profile", response_class=HTMLResponse)
 def profile(request: Request, db: Session = Depends(get_db)):
@@ -128,43 +135,99 @@ def profile(request: Request, db: Session = Depends(get_db)):
         scheme, param = get_authorization_scheme_param(token)
         current_user: models.User = get_current_user_from_token(token=param, db=db)
     except:
-        response = RedirectResponse(url="/", status_code=303)
+        response = RedirectResponse(url="/", status_code=302)
         response.delete_cookie("access_token")
         return response
     return templates.TemplateResponse("profile.html", {"request": request, "user": current_user})
 
-@app.post("/profile/change_avatar")
-def change_avatar(request: Request, avatar: UploadFile = File(...), db: Session = Depends(get_db)):
+@app.post("/profile/set_supervisor")
+def set_supervisor(request: Request, db: Session = Depends(get_db), superpassword: str = Form(None)):
+    if superpassword is None:
+        response = RedirectResponse(url="/", status_code=302)
+
     token = request.cookies.get("access_token")
     try:
         scheme, param = get_authorization_scheme_param(token)
         current_user: models.User = get_current_user_from_token(token=param, db=db)
     except:
-        response = RedirectResponse(url="/", status_code=303)
+        response = RedirectResponse(url="/", status_code=302)
+        response = RedirectResponse(url="/", status_code=302)
+        response.delete_cookie("access_token")
+        return response
+    
+    if  superpassword == settings.SUPERPASSWORD:
+        crud.set_supervisor(db=db, username=current_user.username)
+        return RedirectResponse("/", status_code=302)
+    return RedirectResponse("/", status_code=302)
+
+    
+
+@app.post("/profile/upload_avatar")
+async def upload_avatar(request: Request, avatar: Union[UploadFile, None] = File(None), db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    if avatar is None:
+        return RedirectResponse(url="/profile", status_code=302)
+
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        response = RedirectResponse(url="/", status_code=302)
         response.delete_cookie("access_token")
         return response
 
-    FILEPATH = "./static/"
+    FILEPATH = "./static/avatars/"
     filename = avatar.filename
     extension = filename.split(".")[1]
     if extension not in ["jpg", "png"]:
-        return RedirectResponse(url="/profile", status_code=407)
+        return RedirectResponse(url="/profile", status_code=302)
     token_name = _secrets.token_hex(10) + "." + extension
     generated_name = FILEPATH + token_name
+    file_content = await avatar.read()
+
+    with open(generated_name, "wb") as f:
+        f.write(file_content)
+    img = Image.open(generated_name)
+    w, h = img.size
+    if( w < 160 and h < 160):
+        return RedirectResponse(url="/profile", status_code=302)
+    if(w>h):
+        area = (w/2-h/2, 0, w/2+h/2, h)
+    else:
+        area = (0, h/2-w/2, w, h/2+w/2)
+    
+    img = img.crop(area)    
+    img = img.resize(size = (160, 160))
+    img.save(generated_name)
+    avatar.close()
+    crud.update_avatar(db=db,username=current_user.username,avatar_name=token_name)
+    return RedirectResponse(url="/profile",status_code=302)
     
 
         
 
 @app.get("/post", response_class=HTMLResponse)
-def post(request: Request):
-    return templates.TemplateResponse("postCreation.html", {"request": request})
+def post(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        return RedirectResponse(url="/",status_code=302)
+    if current_user.is_supervisor:
+        return templates.TemplateResponse("postCreation.html", {"request": request, "user": current_user})
+    return RedirectResponse(url="/",status_code=302)
 
 
-@app.post("/post") #TODO post User_id
+@app.post("/post") 
 async def post(request: Request, db: Session = Depends(get_db)):
     token = request.cookies.get("access_token")
-    scheme, param = get_authorization_scheme_param(token)
-    current_user: models.User = get_current_user_from_token(token=param, db=db)
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        return RedirectResponse(url="/",status_code=302)
+
     if current_user is None:
         errors = list()
         errors.append("Expired session. Please login.")
@@ -172,9 +235,53 @@ async def post(request: Request, db: Session = Depends(get_db)):
     form = await request.form()
     title = form.get("title")
     description = form.get("description")
-    if title and description and get_user(db=db,username=current_user.username): #TODO check tITlE
+    if title and description and current_user.is_supervisor:
         post = schemas.PostCreate(title=title, description=description)
-        create_user_post(db=db, post=post, user_id=current_user.id)
-        return RedirectResponse(url="/", status_code=303)
-    return RedirectResponse(url="/",status_code=303)
+        crud.create_user_post(db=db, post=post, user_id=current_user.id)
+        return RedirectResponse(url="/", status_code=302)
+    return RedirectResponse(url="/",status_code=302)
 
+@app.get("/games", response_class=HTMLResponse)
+def games(request: Request, db: Session = Depends(get_db)):
+    games = crud.get_games(db=db)
+    token = request.cookies.get("access_token")
+    if token is None:
+        return templates.TemplateResponse("games.html", {"request": request, "games": games})
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        return templates.TemplateResponse("games.html", {"request": request, "games": games})
+    return templates.TemplateResponse("games.html", {"request": request, "games": games, "user": current_user})
+
+@app.get("/game_post", response_class=HTMLResponse)
+def game_post(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        return RedirectResponse(url="/games",status_code=302)
+    if current_user.is_supervisor:
+        return templates.TemplateResponse("game_post.html", {"request": request, "user": current_user})
+    return RedirectResponse(url="/games",status_code=302)
+
+
+
+@app.post("/game_post")
+async def game_post(request: Request, db: Session = Depends(get_db)):
+    token = request.cookies.get("access_token")
+    try:
+        scheme, param = get_authorization_scheme_param(token)
+        current_user: models.User = get_current_user_from_token(token=param, db=db)
+    except:
+        return RedirectResponse(url="/profile",status_code=302)
+    form = await request.form()
+    title = form.get("title")
+    description = form.get("description")
+    requirements = form.get("requirements")
+    if title and description and current_user.is_supervisor:
+        game = schemas.GameCreate(title=title, description=description,system_requirements=requirements)
+        crud.create_game(db=db, game=game,)
+        return RedirectResponse(url="/", status_code=302)
+    return RedirectResponse(url="/",status_code=302)
