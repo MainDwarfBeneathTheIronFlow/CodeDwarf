@@ -6,6 +6,7 @@ class Settings:
     SECRET_KEY = "483235a3e50662ca32026396f418b332bd50278271f390a4ecd5473f1dcd9a55"
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES = 30  # in mins
+    SUPERPASSWORD = "0987654321"
 
 
 settings = Settings()
