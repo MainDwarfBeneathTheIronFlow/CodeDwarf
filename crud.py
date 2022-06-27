@@ -1,4 +1,5 @@
-from sqlalchemy.orm import Session  
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
 from hasher import hash_password
 import models, schemas
 import os
@@ -8,7 +9,7 @@ def get_user(db: Session, username: str):
     return db.query(models.User).filter(models.User.username == username).first()
 
 def get_posts(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Post).offset(skip).limit(limit).all()
+    return db.query(models.Post).order_by(desc(models.Post.id)).offset(skip).limit(limit).all()
 
 def get_games(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Game).offset(skip).limit(limit).all()
@@ -40,5 +41,11 @@ def update_avatar(db: Session, username: str, avatar_name: str):
     if user.avatar_name != "default.png":
         os.remove(f"static//avatars//{user.avatar_name}")
     user.avatar_name = avatar_name
+    db.commit()
+    db.refresh(user)
+
+def set_supervisor(db: Session, username: str):
+    user = db.query(models.User).filter(models.User.username == username).first()
+    user.is_supervisor = True
     db.commit()
     db.refresh(user)
