@@ -11,6 +11,10 @@ def get_user(db: Session, username: str):
 def get_posts(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Post).order_by(desc(models.Post.id)).offset(skip).limit(limit).all()
 
+def get_post_by_id(db: Session, post_id: int):
+    return db.query(models.Post).filter(models.Post.id == post_id).first()
+
+
 def get_games(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Game).offset(skip).limit(limit).all()
 
@@ -35,6 +39,8 @@ def create_game(db: Session, game: schemas.GameCreate):
     db.commit()
     db.refresh()
     return db_game
+
+
 
 def update_avatar(db: Session, username: str, avatar_name: str):
     user = db.query(models.User).filter(models.User.username == username).first()
