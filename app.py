@@ -140,7 +140,7 @@ def profile(request: Request, db: Session = Depends(get_db)):
         return response
     return templates.TemplateResponse("profile.html", {"request": request, "user": current_user})
 
-@app.post("/profile/set_supervisor")
+@app.post("/set_supervisor")
 def set_supervisor(request: Request, db: Session = Depends(get_db), superpassword: str = Form(None)):
     if superpassword is None:
         response = RedirectResponse(url="/", status_code=302)
@@ -189,7 +189,7 @@ async def upload_avatar(request: Request, avatar: Union[UploadFile, None] = File
         f.write(file_content)
     img = Image.open(generated_name)
     w, h = img.size
-    if( w < 160 and h < 160):
+    if( w < 300 and h < 300):
         return RedirectResponse(url="/profile", status_code=302)
     if(w>h):
         area = (w/2-h/2, 0, w/2+h/2, h)
@@ -197,7 +197,7 @@ async def upload_avatar(request: Request, avatar: Union[UploadFile, None] = File
         area = (0, h/2-w/2, w, h/2+w/2)
     
     img = img.crop(area)    
-    img = img.resize(size = (160, 160))
+    img = img.resize(size = (300, 300))
     img.save(generated_name)
     avatar.close()
     crud.update_avatar(db=db,username=current_user.username,avatar_name=token_name)
@@ -226,7 +226,7 @@ def post_id(request: Request,id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/post") 
-async def post(request: Request, db: Session = Depends(get_db)):
+async def post(request: Request, db: Session = Depends(get_db), img: Union[UploadFile, None] = File(None)):
     token = request.cookies.get("access_token")
     try:
         scheme, param = get_authorization_scheme_param(token)
@@ -241,12 +241,37 @@ async def post(request: Request, db: Session = Depends(get_db)):
     form = await request.form()
     title = form.get("title")
     description = form.get("description")
+
+    FILEPATH = "./static/imgs/"
+    filename = img.filename
+    extension = filename.split(".")[1]
+    if extension not in ["jpg", "png"]:
+        return RedirectResponse(url="/post", status_code=302)
+    token_name = _secrets.token_hex(10) + "." + extension
+    generated_name = FILEPATH + token_name
+    file_content = await img.read()
+
+    with open(generated_name, "wb") as f:
+        f.write(file_content)
+    img = Image.open(generated_name)
+    w, h = img.size
+    if( w < 160 and h < 160):
+        return RedirectResponse(url="/post", status_code=302)
+    if(w>h):
+        area = (w/2-h/2, 0, w/2+h/2, h)
+    else:
+        area = (0, h/2-w/2, w, h/2+w/2)
+    
+    img = img.crop(area)    
+    img = img.resize(size = (160, 160))
+    img.save(generated_name)
+    img.close()
     if title and description and current_user.is_supervisor:
         if len(description) > 300:
             short_description = description[:300] + "..."
-            post = schemas.PostCreate(title=title,short_description=short_description,description=description)
+            post = schemas.PostCreate(title=title,short_description=short_description,description=description, img_name=token_name)
         else:
-            post = schemas.PostCreate(title=title,short_description=description,description=description)
+            post = schemas.PostCreate(title=title,short_description=description,description=description, img_name=token_name)
             
         crud.create_user_post(db=db, post=post, user_id=current_user.id)
         return RedirectResponse(url="/", status_code=302)
@@ -280,17 +305,41 @@ def game_post(request: Request, db: Session = Depends(get_db)):
 
 
 @app.post("/game_post")
-async def game_post(request: Request, db: Session = Depends(get_db)):
+async def game_post(request: Request, db: Session = Depends(get_db),img: Union[UploadFile, None] = File(None)):
     token = request.cookies.get("access_token")
     try:
         scheme, param = get_authorization_scheme_param(token)
         current_user: models.User = get_current_user_from_token(token=param, db=db)
     except:
-        return RedirectResponse(url="/profile",status_code=302)
+        return RedirectResponse(url="/",status_code=302)
     form = await request.form()
     title = form.get("title")
     description = form.get("description")
     requirements = form.get("requirements")
+    FILEPATH = "./static/imgs/"
+    filename = img.filename
+    extension = filename.split(".")[1]
+    if extension not in ["jpg", "png"]:
+        return RedirectResponse(url="/game_post", status_code=302)
+    token_name = _secrets.token_hex(10) + "." + extension
+    generated_name = FILEPATH + token_name
+    file_content = await img.read()
+
+    with open(generated_name, "wb") as f:
+        f.write(file_content)
+    img = Image.open(generated_name)
+    w, h = img.size
+    if( w < 160 and h < 160):
+        return RedirectResponse(url="/game_post", status_code=302)
+    if(w>h):
+        area = (w/2-h/2, 0, w/2+h/2, h)
+    else:
+        area = (0, h/2-w/2, w, h/2+w/2)
+    
+    img = img.crop(area)    
+    img = img.resize(size = (160, 160))
+    img.save(generated_name)
+    img.close()
     if title and description and current_user.is_supervisor:
         game = schemas.GameCreate(title=title, description=description,system_requirements=requirements)
         crud.create_game(db=db, game=game,)
