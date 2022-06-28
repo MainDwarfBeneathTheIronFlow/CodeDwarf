@@ -16,6 +16,7 @@ class PostBase(BaseModel):
     title: str
     short_description: Union[str, None] = None
     description: Union[str, None] = None
+    img_name: str
 
 
 class PostCreate(PostBase):
@@ -57,6 +58,7 @@ class GameBase(BaseModel):
     title: str
     description: Union[str, None] = None
     system_requirements: Union[str, None] = None
+    img_name: str
 
 
 class GameCreate(GameBase):
