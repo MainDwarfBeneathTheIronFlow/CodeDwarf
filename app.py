@@ -1,10 +1,11 @@
 from datetime import timedelta
 import secrets as _secrets
 from typing import Union
+from urllib import response
 from PIL import Image
 
 from fastapi import FastAPI, Request, Response, Depends, Cookie, HTTPException, status, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, UJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
@@ -108,15 +109,14 @@ def login_for_access_token(response: Response, request: Request,
     db: Session = Depends(get_db)):  #added response as a function parameter
     
     if username is None or password is None:
-        return templates.TemplateResponse("login.html", {"request": request})  
+        return templates.TemplateResponse("login.html", {"request": request, "log": True})  
     user = authenticate_user(username, password, db)
     posts = crud.get_posts(db=db)
     
     errors = list()
     if not user:
         errors.append("Incorrect username or password")
-        return templates.TemplateResponse("login.html", {"request": request, "errors":errors})  
-        return templates.TemplateResponse("login.html", {"request": request, "errors":errors})  
+        return templates.TemplateResponse("registration.html", {"request": request, "errors":errors, "log": True})    
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
@@ -218,6 +218,12 @@ def post(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse("postCreation.html", {"request": request, "user": current_user})
     return RedirectResponse(url="/",status_code=302)
 
+@app.get("/post/{id}")
+def post_id(request: Request,id: int, db: Session = Depends(get_db)):
+    db_post = crud.get_post_by_id(db=db, post_id=id)
+    return db_post.description
+
+
 
 @app.post("/post") 
 async def post(request: Request, db: Session = Depends(get_db)):
@@ -236,7 +242,12 @@ async def post(request: Request, db: Session = Depends(get_db)):
     title = form.get("title")
     description = form.get("description")
     if title and description and current_user.is_supervisor:
-        post = schemas.PostCreate(title=title, description=description)
+        if len(description) > 300:
+            short_description = description[:300] + "..."
+            post = schemas.PostCreate(title=title,short_description=short_description,description=description)
+        else:
+            post = schemas.PostCreate(title=title,short_description=description,description=description)
+            
         crud.create_user_post(db=db, post=post, user_id=current_user.id)
         return RedirectResponse(url="/", status_code=302)
     return RedirectResponse(url="/",status_code=302)
