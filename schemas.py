@@ -14,6 +14,7 @@ class TokenData(BaseModel):
 
 class PostBase(BaseModel):
     title: str
+    short_description: Union[str, None] = None
     description: Union[str, None] = None
 
 
