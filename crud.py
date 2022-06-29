@@ -34,10 +34,10 @@ def create_user_post(db: Session, post: schemas.PostCreate, user_id: int):
     return db_post
 
 def create_game(db: Session, game: schemas.GameCreate):
-    db_game = models(**game.dict())
+    db_game = models.Game(**game.dict())
     db.add(db_game)
     db.commit()
-    db.refresh()
+    db.refresh(db_game)
     return db_game
 
 
