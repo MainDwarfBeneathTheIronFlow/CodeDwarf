@@ -341,7 +341,7 @@ async def game_post(request: Request, db: Session = Depends(get_db),img: Union[U
     img.save(generated_name)
     img.close()
     if title and description and current_user.is_supervisor:
-        game = schemas.GameCreate(title=title, description=description,system_requirements=requirements)
-        crud.create_game(db=db, game=game,)
+        game = schemas.GameCreate(game_name=title, description=description,system_requirements=requirements, img_name=token_name)
+        crud.create_game(db=db, game=game)
         return RedirectResponse(url="/", status_code=302)
     return RedirectResponse(url="/",status_code=302)
