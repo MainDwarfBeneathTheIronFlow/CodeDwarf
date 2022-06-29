@@ -55,7 +55,7 @@ class UserShow(UserBase):
 
 
 class GameBase(BaseModel):
-    title: str
+    game_name: str
     description: Union[str, None] = None
     system_requirements: Union[str, None] = None
     img_name: str
