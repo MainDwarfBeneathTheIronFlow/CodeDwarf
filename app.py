@@ -302,7 +302,10 @@ def game_post(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse("game_post.html", {"request": request, "user": current_user})
     return RedirectResponse(url="/games",status_code=302)
 
-
+@app.get("game/{id}")
+def game_id(request: Request,id: int, db: Session = Depends(get_db)):
+    db_game = crud.get_game_by_id(db=db, post_id=id)
+    return db_game.description
 
 @app.post("/game_post")
 async def game_post(request: Request, db: Session = Depends(get_db),img: Union[UploadFile, None] = File(None)):
