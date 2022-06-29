@@ -1,7 +1,6 @@
 from datetime import timedelta
 import secrets as _secrets
 from typing import Union
-from urllib import response
 from PIL import Image
 
 from fastapi import FastAPI, Request, Response, Depends, Cookie, HTTPException, status, Form, UploadFile, File
