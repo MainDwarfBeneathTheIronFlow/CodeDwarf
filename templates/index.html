@@ -5,9 +5,9 @@
     <title>Main_page</title>
     <link href = "{{ url_for('static', path = '/css/styles.css') }}" rel="stylesheet">
     <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" ></script>
-    <script src = "{{ url_for('static', path = '/js/logic.js') }}"></script>
     <script> 
         let pathToProject = "{{ url_for('static', path = '/') }}";
+        let pageCond = "news";
     </script>
     <style>
         {% for post in posts %}
@@ -75,7 +75,7 @@
         </script>
         {% endif %}
     </div>
-    <script src = "{{ url_for('static', path = '/js/news.js') }}"></script>
+    <script src = "{{ url_for('static', path = '/js/logic.js') }}"></script>
 
 </body>
 </html>

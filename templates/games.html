@@ -7,7 +7,13 @@
     <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" ></script>
     <script> 
         let pathToProject = "{{ url_for('static', path = '/') }}";
+        let pageCond = "project";
     </script>
+    <style>
+        {% for post in games %}
+            .project{{post.id}}::before{ background-image: url({{ url_for('static', path = '/') }}/imgs/{{post.img_name}})};
+        {% endfor %}
+    </style>
 </head>
 <body>
     <div class = "flex_box">
@@ -25,7 +31,7 @@
             <div id="content" class="content">
                 <div id="news_block" class="news_block">
                     {% for post in games %}
-                        <article id="news{{ post.id }}" class="news_element news{{ post.id }}">
+                        <article id="project{{ post.id }}" class="news_element project{{ post.id }}">
                             <div class="news_content">
                                 <div class="news_header">
                                     <div class="news_title">{{ post.game_name }}</div>
@@ -67,6 +73,6 @@
         </script>
         {% endif %}
     </div>
-    <script src = "{{ url_for('static', path = '/js/news.js') }}"></script>
+    <script src = "{{ url_for('static', path = '/js/logic.js') }}"></script>
 </body>
 </html>
