@@ -18,6 +18,9 @@ def get_post_by_id(db: Session, post_id: int):
 def get_games(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Game).offset(skip).limit(limit).all()
 
+def get_game_by_id(db: Session, game_id: int):
+    return db.query(models.Game).filter(models.Game.id == game_id).first()
+
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = hash_password(user.password)
     db_user = models.User(username = user.username, hashed_password=hashed_password)
