@@ -3,14 +3,12 @@ import secrets as _secrets
 from typing import Union
 from PIL import Image
 
-from fastapi import FastAPI, Request, Response, Depends, Cookie, HTTPException, status, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, UJSONResponse
+from fastapi import FastAPI, Request, Response, Depends, Cookie, Form, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security.utils import get_authorization_scheme_param
 from sqlalchemy.orm import Session
-from utils import OAuth2PasswordBearerWithCookie
 from database import engine, get_db
 from security import create_access_token
 from auth import authenticate_user, get_current_user_from_token
