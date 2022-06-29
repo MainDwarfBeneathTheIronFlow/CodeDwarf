@@ -1,0 +1,81 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main_page</title>
+    <link href = "{{ url_for('static', path = '/css/styles.css') }}" rel="stylesheet">
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" ></script>
+    <script src = "{{ url_for('static', path = '/js/logic.js') }}"></script>
+    <script> 
+        let pathToProject = "{{ url_for('static', path = '/') }}";
+    </script>
+    <style>
+        {% for post in posts %}
+            .news{{post.id}}::before{ background-image: url({{ url_for('static', path = '/') }}/imgs/{{post.img_name}})};
+        {% endfor %}
+    </style>
+</head>
+<body>
+    <div class = "flex_box">
+        {% if not user %}
+        <div id = "header" class = "flex_header">
+            <form id = "reged_button" action="/registration" method="get">    
+                <input class="to_reg_button" type="submit" value="Registration">
+            </form>
+        
+        </div>
+        {% endif %}
+        <div class = "flex_base">
+            <div class="left_panel"></div>
+
+            <div id="content" class="content">
+                <div id="news_block" class="news_block">
+                    {% for post in posts %}
+                        <article id="news{{ post.id }}" var="" class="news_element news{{ post.id }}">
+                            <div class="news_content">
+                                <div class="news_header">
+                                    <div class="news_title">{{ post.title }}</div>
+                                    <div class="news_author">{{ post.author }}</div>
+                                </div>
+                                <div class="news_tenor">{{ post.short_description }}</div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+                <div class="news_viewer"></div>
+            </div>
+
+            <div class="right_panel">
+                <form id = "to_news_button" class="jump_button" action="/" method="get">
+                    <input class="jump_button" type="submit" value="News">
+                </form>
+                <form id = "to_projects_button" class="jump_button" action="/games" method="get">
+                    <input class="jump_button" type="submit" value="Projects">
+                </form>
+            </div>
+
+
+        </div>
+        {% if user %}
+        <div id = "footer" class = "flex_footer">
+            <a href="/profile"><div class="profile"></div></a>
+            <img id="miniPreview" src="" alt="">
+
+            
+            <div class="btif">
+                <div class="helper"></div>
+                <div class="btif_image"></div>
+            </div>
+
+            <a href="/logout"><div class="logout"></div></a>
+        </div>
+        <script>
+            let avatarName = "{{ user.avatar_name }}";
+            document.getElementById("miniPreview").src = pathToProject + "/avatars/" + avatarName; 
+        </script>
+        {% endif %}
+    </div>
+    <script src = "{{ url_for('static', path = '/js/news.js') }}"></script>
+
+</body>
+</html>

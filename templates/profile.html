@@ -1,0 +1,107 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>profile</title>
+    <link href = "{{ url_for('static', path = '/css/styles.css') }}" rel="stylesheet">
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" ></script>
+    <script src = "{{ url_for('static', path = '/js/Profile.js') }}"></script>
+    <script> 
+        let pathToProject = "{{ url_for('static', path = '/') }}";
+        let avatarName = "{{ user.avatar_name }}";
+    </script>
+</head>
+<body>
+    <div class = "flex_box">
+        {% if not user %}
+        <div id = "header" class = "flex_header">
+            <form id = "reged_button" action="/registration" method="get">    
+                <input class="to_reg_button" type="submit" value="Registration">
+            </form>
+        
+        </div>
+        {% endif %}
+        {% if user %}
+        <div class = "flex_base">
+            <div class="left_panel"></div>
+
+            <div id="content" class="content">
+                <div class="profile_page">
+                    <div class="tongues">
+                        <form name = "toProfile" id = "toProfile" class="activated" action="#" onsubmit="return false">
+                            <input type="submit" value="Profile">
+                        </form>
+                        <form name = "toOptions" id = "toOptions" class="inactivated" action="#"  onsubmit="return false">
+                            <input type="submit" value="Options">
+                        </form>
+                    </div>
+
+                    
+                    <div class="profile_viewer">
+                        <div id="profileList" class="options_list">
+                            <p>Личное дело</p>
+                            
+                            <form action="{{ url_for('upload_avatar') }}" method="POST" enctype="multipart/form-data">
+                                <label id="avatarLabel" class="change_the_avatar" for="inputTag"> 
+                                    Новая аватарка субъекта
+                                    <input id="inputTag" class="noned" type="file" name="avatar"/>
+                                </label>
+                                <input class="but" type="submit" value="send">
+                            </form>
+                            <form action="/set_supervisor" method="POST">
+                                <input id="setSupervisor" placeholder="" autocomplete="" type="password" name="superpassword">
+                                <input class="but" type="submit" value="try">
+                            </form>
+                            {% if user.is_supervisor %}
+                            <form action="/post" method="GET">
+                                <input class="but full" type="submit" value="Начать вершить историю">
+                            </form>
+                            <form action="/game_post" method="GET">
+                                <input class="but full" type="submit" value="Начать вершить другую историю">
+                            </form>
+                            {% endif %}
+
+
+                        </div>
+
+                        <div id="profileViewer" class="local_content">
+                            <img class="prev" id="preview" src="" alt="">
+                            <div class="name">{{user.username}}</div> 
+                        </div>
+                    </div> 
+                </div>
+                
+                
+                
+                
+            </div>
+
+            <div class="right_panel">
+                <form id = "to_news_button" class="jump_button" action="/" method="get">
+                    <input class="jump_button" type="submit" value="News">
+                </form>
+                <form id = "to_projects_button" class="jump_button" action="/games" method="get">
+                    <input class="jump_button" type="submit" value="Projects">
+                </form>
+            </div>
+
+
+        </div>
+
+
+        <div id = "footer" class = "flex_footer">
+            
+            <a href="/profile"><div class="profile"></div></a>
+            <img id="miniPreview" src="" alt="">
+            <div class="btif">
+                <div class="helper"></div>
+                <div class="btif_image"></div>
+            </div>
+
+            <a href="/logout"><div class="logout"></div></a>
+        </div>        
+        {% endif %}
+    </div>
+    <!-- <script src = "{{ url_for('static', path = '/js/news.js') }}"></script> -->
+</body>
+</html>

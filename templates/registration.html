@@ -1,0 +1,94 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <link href = "{{ url_for('static', path = '/css/styles.css') }}" rel="stylesheet">
+    <script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" ></script>
+    <script src = "{{ url_for('static', path = '/js/logic.js') }}"></script>
+    <script> 
+        let pathToProject = "{{ url_for('static', path = '/') }}";
+        let pageCondition = "/registration";
+    </script>
+</head>
+<body>
+    <div class = "flex_box">
+        <div id = "header" class = "flex_header">
+            <div id="pipeBlock" class="pipe_block">
+                <div class="pipe_flex">
+                    <div class="pipe pipe1"></div>
+                    <div class="pipe pipe2"></div>
+                    <div class="pipe pipe3"></div>
+                    <div class="pipe pipe4"></div>
+                </div>
+            </div>
+            <form id = "reged_button" action="/registration" method="get" onsubmit="return false">
+                <input class="to_reg_button" type="submit" value="Registration">
+            </form>
+        
+        </div>
+        <div class = "flex_base">
+            <div class="left_panel"></div>
+
+            <div id="content" class="content">
+                <div class="reg_book">
+
+                    <div class="tongues">
+                        <form name = "toLogin" id = "toLogin" {% if log %} class="activated" {% else %} class="inactivated" {% endif %} action="/login"  method="GET" onsubmit="return false">
+                            <input type="submit" value="Login">
+                        </form>
+                        <form name = "toRegistrarion"  id = "toRegistrarion"  {% if log %} class="inactivated" {% else %} class="activated" {% endif %} action="/registration"  method="GET" onsubmit="return false">
+                            <input type="submit" value="Registration">
+                        </form>
+                    </div>
+
+
+                    <form id = "feedBack" class="field_form" name="feedBack"  {% if log %} action="/login" {% else %} action="/registration" {% endif %}  method="POST">
+                        <input placeholder="Username" required type="text" name="username">
+                        <input placeholder="Password" required type="password" name="password">
+                        <input id = "subButton" type="submit" value="login">
+                        {% if errors %}
+                            {% for error in errors %}
+                                <div class="error_out">{{error}}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </form>
+                    
+                </div>
+            </div>
+
+            <div class="right_panel">
+                <form id = "to_news_button" class="jump_button" action="/" method="get">
+                    <input class="jump_button" type="submit" value="News">
+                </form>
+                <form id = "to_projects_button" class="jump_button" action="/games" method="get">
+                    <input class="jump_button" type="submit" value="Projects">
+                </form>
+            </div>
+
+
+        </div>
+
+        <div id = "footer" class = "flex_footer">
+            <div class="false_footer"></div>
+            <a href="/profile"><div class="profile"></div></a>
+            <img id="miniPreview" src="" alt="">
+
+            
+            <div class="btif">
+                <div class="helper"></div>
+                <div class="btif_image"></div>
+            </div>
+
+            <a href="/logout"><div class="logout"></div></a>
+        </div>  
+        <script>
+            let avatarName = "default.png";
+            document.getElementById("miniPreview").src = pathToProject + "/avatars/" + avatarName; 
+        </script>
+    </div>
+    <div id="my_canvas" class="my_canvas"><canvas></canvas></div>
+
+    <script src = "{{ url_for('static', path = '/js/registration.js') }}"></script>
+</body>
+</html>
